@@ -1,0 +1,82 @@
+<h2>Моя геолокация:</h2>
+<h1 id="location"></h1>
+
+<script>
+    // Вариант 1
+    console.log("привет");
+
+    navigator.geolocation.getCurrentPosition(function (pos) {
+
+        console.log("привет", pos);
+
+        let xhr = new XMLHttpRequest();
+
+        xhr.open('GET', 'https://geocode-maps.yandex.ru/1.x/?apikey=a0f4c97d-641f-4a82-861f-e88cccdb49d0&format=json&geocode=' + pos.coords.longitude + ',' + pos.coords.latitude);
+
+        xhr.send();
+
+        xhr.addEventListener('readystatechange', async function () {
+
+            if (xhr.status == 200 && xhr.readyState == 4) {
+
+                let responseObj = JSON.parse(xhr.responseText);
+
+
+
+                let geoData = responseObj.response.GeoObjectCollection.featureMember;
+
+                console.log(geoData);
+
+                let locality = '';
+
+                // for (let part of geoData) {
+
+                //     let metaDataObj = part.GeoObject.metaDataProperty.GeocoderMetaData
+
+                //     if (metaDataObj.kind == 'locality') locality = part.GeoObject.name;
+                // }
+                // document.querySelector('#location').innerHTML = locality;
+                locality = `${geoData[0].GeoObject.description}, ${geoData[0].GeoObject.name}`
+                document.querySelector('#location').innerHTML = locality;
+
+
+
+                const req = await fetch(
+                    '/get_location',
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        method: 'POST',
+                        body: JSON.stringify({ "Локация": locality })
+                    });
+                const res = await req.json();
+                console.log(res)
+            }
+
+        })
+
+    })
+
+    // Вариант 2
+    var options = {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+    };
+
+    function success(pos) {
+        var crd = pos.coords;
+
+        console.log('Ваше текущее местоположение:');
+        console.log(`Широта: ${crd.latitude}`);
+        console.log(`Долгота: ${crd.longitude}`);
+        console.log(`Плюс-минус ${crd.accuracy} метров.`);
+    };
+
+    function error(err) {
+        console.warn(`ERROR(${err.code}): ${err.message}`);
+    };
+
+    navigator.geolocation.getCurrentPosition(success, error, options);
+</script>
